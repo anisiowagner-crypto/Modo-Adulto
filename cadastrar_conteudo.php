@@ -2,6 +2,7 @@
 session_start();
 require 'conexao.php';
 
+// Segurança: Garante acesso apenas para curadores autenticados (RN2)
 if (!isset($_SESSION['curador_id'])) {
     header("Location: login.php");
     exit;
@@ -10,8 +11,8 @@ if (!isset($_SESSION['curador_id'])) {
 $mensagem = '';
 $erro = '';
 
-// Procura Nichos e Temas para popular as opções do formulário
-$nichos = $pdo->query("SELECT * FROM nicho ORDER BY nome")->fetchAll(PDO::FETCH_ASSOC);
+// Procura Nichos e Temas (buscando id_nicho do tema para vincular no frontend)
+$nichos = $pdo->query("SELECT * FROM nicho ORDER BY id_nicho")->fetchAll(PDO::FETCH_ASSOC);
 $temas = $pdo->query("SELECT * FROM tema ORDER BY nome")->fetchAll(PDO::FETCH_ASSOC);
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
@@ -43,14 +44,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             ]);
             $id_conteudo = $pdo->lastInsertId();
 
-            // 2. Inserir os Temas associados (Relacionamento N:M)
+            // 2. Inserir os Temas associados (Relacionamento N:M na tabela conteudo_tema)
             $sqlTema = "INSERT INTO conteudo_tema (id_conteudo, id_tema) VALUES (:id_conteudo, :id_tema)";
             $stmtTema = $pdo->prepare($sqlTema);
             foreach ($temas_selecionados as $id_tema) {
                 $stmtTema->execute([':id_conteudo' => $id_conteudo, ':id_tema' => $id_tema]);
             }
 
-            // 3. Inserir nas tabelas de especialização conforme a mídia
+            // 3. Inserir nas tabelas específicas de acordo com o tipo de mídia
             if ($tipo_midia == 'video') {
                 $stmtMedia = $pdo->prepare("INSERT INTO video (id_conteudo, link_ou_arquivo_do_video) VALUES (?, ?)");
                 $stmtMedia->execute([$id_conteudo, $_POST['link_video']]);
@@ -80,55 +81,65 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <meta charset="UTF-8">
     <title>Cadastrar Conteúdo - Modo Adulto</title>
     <style>
-        body { font-family: sans-serif; background-color: #e6f0fa; padding: 20px; }
-        .form-box { background: #fff; padding: 25px; max-width: 700px; margin: 0 auto; border-radius: 8px; border-top: 5px solid #0056b3; }
-        .form-group { margin-bottom: 15px; }
-        label { font-weight: bold; display: block; margin-bottom: 5px; color: #0056b3; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #e6f0fa; padding: 20px; }
+        .form-box { background: #fff; padding: 25px; max-width: 700px; margin: 0 auto; border-radius: 8px; border-top: 5px solid #0056b3; box-shadow: 0 4px 8px rgba(0,0,0,0.05); }
+        .form-group { margin-bottom: 20px; }
+        label { font-weight: bold; display: block; margin-bottom: 6px; color: #0056b3; }
         input[type="text"], textarea, select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
-        .checkbox-group { display: flex; flex-wrap: wrap; gap: 10px; background: #f8f9fa; padding: 10px; border-radius: 4px; }
-        .checkbox-group label { font-weight: normal; color: #333; }
-        .btn { padding: 10px 20px; background-color: #0056b3; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
-        .midia-fields { display: none; margin-top: 15px; padding: 15px; background: #f0f7ff; border-radius: 4px; }
-        .alert-success { color: green; font-weight: bold; margin-bottom: 15px; }
-        .alert-danger { color: red; font-weight: bold; margin-bottom: 15px; }
+        .checkbox-group { display: flex; flex-wrap: wrap; gap: 10px; background: #f0f7ff; padding: 15px; border-radius: 4px; border: 1px solid #cce0ff; }
+        .item-tema { display: none; margin-right: 15px; } /* Oculto por padrão até selecionar o nicho */
+        .item-tema label { font-weight: normal; color: #333; cursor: pointer; }
+        .btn { padding: 12px 20px; background-color: #0056b3; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 1rem; }
+        .btn:hover { background-color: #003d80; }
+        .midia-fields { display: none; margin-top: 15px; padding: 15px; background: #eef5fc; border-radius: 4px; border-left: 3px solid #0056b3; }
+        .alert-success { color: #155724; background-color: #d4edda; border: 1px solid #c3e6cb; padding: 10px; border-radius: 4px; margin-bottom: 15px; }
+        .alert-danger { color: #721c24; background-color: #f8d7da; border: 1px solid #f5c6cb; padding: 10px; border-radius: 4px; margin-bottom: 15px; }
     </style>
 </head>
 <body>
     <div class="form-box">
         <h2>Cadastrar Novo Conteúdo</h2>
-        <a href="painel_curador.php">← Voltar ao Painel</a><br><br>
+        <a href="painel_curador.php" style="color: #0056b3; text-decoration: none; font-weight: bold;">← Voltar ao Painel</a><br><br>
 
         <?php if ($mensagem): ?><div class="alert-success"><?= $mensagem ?></div><?php endif; ?>
         <?php if ($erro): ?><div class="alert-danger"><?= $erro ?></div><?php endif; ?>
 
         <form method="POST" action="cadastrar_conteudo.php">
             <div class="form-group">
-                <label>Título:</label>
-                <input type="text" name="titulo" required>
+                <label>Título do Conteúdo:</label>
+                <input type="text" name="titulo" required placeholder="Ex: Como fazer arroz soltinho">
             </div>
 
             <div class="form-group">
                 <label>Síntese/Descrição:</label>
-                <textarea name="descricao" rows="3" required></textarea>
+                <textarea name="descricao" rows="3" required placeholder="Escreva uma breve explicação em linguagem simples..."></textarea>
             </div>
 
+            <!-- Seleção do Nicho -->
             <div class="form-group">
                 <label>Nicho Principal (RN1):</label>
-                <select name="id_nicho" required>
-                    <option value="">Selecione um Nicho</option>
+                <select name="id_nicho" id="select_nicho" onchange="filtrarTemasPorNicho()" required>
+                    <option value="">-- Selecione um Nicho --</option>
                     <?php foreach ($nichos as $n): ?>
-                        <option value="<?= $n['id_nicho'] ?>"><?= $n['nome'] ?></option>
+                        <option value="<?= $n['id_nicho'] ?>"><?= htmlspecialchars($n['nome']) ?></option>
                     <?php endforeach; ?>
                 </select>
             </div>
 
+            <!-- Seleção Dinâmica dos Temas vinculados ao Nicho -->
             <div class="form-group">
                 <label>Temas Relacionados (Selecione pelo menos um):</label>
-                <div class="checkbox-group">
+                <p id="msg_selecione_nicho" style="font-size: 0.9rem; color: #666; margin-top: 0;">
+                    <em>Por favor, selecione um Nicho acima para ver os temas disponíveis.</em>
+                </p>
+                <div class="checkbox-group" id="container_temas" style="display: none;">
                     <?php foreach ($temas as $t): ?>
-                        <label>
-                            <input type="checkbox" name="temas[]" value="<?= $t['id_tema'] ?>"> <?= $t['nome'] ?>
-                        </label>
+                        <div class="item-tema tema-nicho-<?= $t['id_nicho'] ?>">
+                            <label>
+                                <input type="checkbox" name="temas[]" value="<?= $t['id_tema'] ?>"> 
+                                <?= htmlspecialchars($t['nome']) ?>
+                            </label>
+                        </div>
                     <?php endforeach; ?>
                 </div>
             </div>
@@ -136,7 +147,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             <div class="form-group">
                 <label>Tipo de Mídia:</label>
                 <select name="tipo_midia" id="tipo_midia" onchange="mostrarCamposMidia()" required>
-                    <option value="">Selecione o formato</option>
+                    <option value="">-- Selecione o formato --</option>
                     <option value="video">Vídeo</option>
                     <option value="artigo">Artigo</option>
                     <option value="podcast">Podcast</option>
@@ -144,10 +155,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 </select>
             </div>
 
-            <!-- Campos Específicos Dinâmicos -->
+            <!-- Campos Específicos por Tipo de Mídia -->
             <div id="field_video" class="midia-fields">
                 <label>Link/URL do Vídeo:</label>
-                <input type="text" name="link_video">
+                <input type="text" name="link_video" placeholder="https://youtube.com/...">
             </div>
 
             <div id="field_artigo" class="midia-fields">
@@ -159,7 +170,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
             <div id="field_podcast" class="midia-fields">
                 <label>Link/URL do Áudio do Podcast:</label>
-                <input type="text" name="link_podcast">
+                <input type="text" name="link_podcast" placeholder="https://spotify.com/...">
             </div>
 
             <div id="field_flashcard" class="midia-fields">
@@ -175,11 +186,36 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     </div>
 
     <script>
+        // Função para mostrar somente os temas vinculados ao nicho selecionado
+        function filtrarTemasPorNicho() {
+            const nichoId = document.getElementById('select_nicho').value;
+            const containerTemas = document.getElementById('container_temas');
+            const msgNicho = document.getElementById('msg_selecione_nicho');
+            const todosOsTemas = document.querySelectorAll('.item-tema');
+
+            // Limpa as escolhas anteriores e oculta todos os temas
+            todosOsTemas.forEach(el => {
+                el.style.display = 'none';
+                const checkbox = el.querySelector('input[type="checkbox"]');
+                if (checkbox) checkbox.checked = false;
+            });
+
+            if (nichoId) {
+                msgNicho.style.display = 'none';
+                containerTemas.style.display = 'flex';
+                
+                // Exibe apenas os temas pertencentes ao id_nicho selecionado
+                const temasDoNicho = document.querySelectorAll('.tema-nicho-' + nichoId);
+                temasDoNicho.forEach(el => el.style.display = 'block');
+            } else {
+                msgNicho.style.display = 'block';
+                containerTemas.style.display = 'none';
+            }
+        }
+
+        // Função para exibir os campos específicos da mídia escolhida
         function mostrarCamposMidia() {
-            // Oculta todos os campos específicos
             document.querySelectorAll('.midia-fields').forEach(el => el.style.display = 'none');
-            
-            // Exibe apenas o campo relativo à mídia selecionada
             const tipo = document.getElementById('tipo_midia').value;
             if (tipo) {
                 const target = document.getElementById('field_' + tipo);

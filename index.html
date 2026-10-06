@@ -5,32 +5,49 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Modo Adulto - Apoio à Autonomia</title>
     <style>
-        /* CSS: Temática Azul e Branco e Responsividade */
         :root {
             --primary-blue: #0056b3;
+            --dark-blue: #003d80;
             --light-blue: #e6f0fa;
             --white: #ffffff;
             --dark-text: #333333;
+            --gray-border: #cce0ff;
         }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        body { background-color: var(--light-blue); color: var(--dark-text); }
+        body { background-color: var(--light-blue); color: var(--dark-text); min-height: 100vh; display: flex; flex-direction: column; }
         
-        header { background-color: var(--primary-blue); color: var(--white); padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; }
+        header { background-color: var(--primary-blue); color: var(--white); padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         header h1 { font-size: 1.8rem; }
         nav a { color: var(--white); text-decoration: none; margin-left: 15px; font-weight: bold; }
         nav a:hover { text-decoration: underline; }
         
-        .search-container { margin: 2rem auto; text-align: center; width: 90%; max-width: 600px; }
-        .search-container input { width: 75%; padding: 10px; border: 1px solid var(--primary-blue); border-radius: 4px 0 0 4px; }
-        .search-container button { width: 20%; padding: 10px; background-color: var(--primary-blue); color: var(--white); border: none; cursor: pointer; border-radius: 0 4px 4px 0; }
+        .search-container { margin: 2rem auto 1rem auto; text-align: center; width: 90%; max-width: 600px; }
+        .search-container input { width: 75%; padding: 12px; border: 2px solid var(--primary-blue); border-radius: 6px 0 0 6px; outline: none; font-size: 1rem; }
+        .search-container button { width: 20%; padding: 12px; background-color: var(--primary-blue); color: var(--white); border: 2px solid var(--primary-blue); cursor: pointer; border-radius: 0 6px 6px 0; font-weight: bold; font-size: 1rem; }
+        .search-container button:hover { background-color: var(--dark-blue); }
+
+        .content-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; padding: 2rem; max-width: 1200px; margin: 0 auto; width: 100%; }
+        .card { background-color: var(--white); border: 1px solid var(--gray-border); border-radius: 8px; padding: 20px; display: flex; flex-direction: column; justify-content: space-between; box-shadow: 0 4px 6px rgba(0,0,0,0.05); transition: transform 0.2s; }
+        .card:hover { transform: translateY(-3px); }
+        .card-header { margin-bottom: 10px; display: flex; gap: 5px; }
+        .card h3 { color: var(--primary-blue); margin: 10px 0; font-size: 1.2rem; }
+        .card p { font-size: 0.95rem; color: #555; line-height: 1.4; margin-bottom: 15px; }
+        .badge { background-color: var(--light-blue); color: var(--primary-blue); padding: 4px 10px; font-size: 0.75rem; border-radius: 12px; font-weight: bold; text-transform: uppercase; }
         
-        .content-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; padding: 2rem; }
-        .card { background-color: var(--white); border: 1px solid #cce0ff; border-radius: 8px; padding: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        .card h3 { color: var(--primary-blue); margin-bottom: 10px; }
-        .card .badge { background-color: var(--light-blue); color: var(--primary-blue); padding: 3px 8px; font-size: 0.8rem; border-radius: 12px; }
-        
-        /* Contato Section */
-        .contatos { background-color: var(--white); padding: 2rem; text-align: center; margin-top: 2rem; border-top: 4px solid var(--primary-blue); }
+        .btn-acessar { background-color: var(--primary-blue); color: var(--white); border: none; padding: 10px; border-radius: 5px; font-weight: bold; cursor: pointer; width: 100%; text-align: center; }
+        .btn-acessar:hover { background-color: var(--dark-blue); }
+
+        /* Estilos do Modal */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); justify-content: center; align-items: center; z-index: 1000; padding: 20px; }
+        .modal-content { background: var(--white); width: 100%; max-width: 700px; max-height: 85vh; overflow-y: auto; border-radius: 8px; padding: 25px; position: relative; border-top: 6px solid var(--primary-blue); }
+        .close-modal { position: absolute; top: 15px; right: 20px; font-size: 1.8rem; cursor: pointer; color: #888; font-weight: bold; }
+        .close-modal:hover { color: var(--dark-text); }
+        .modal-body { margin-top: 15px; line-height: 1.6; }
+
+        .flashcard-box { background: var(--light-blue); border: 2px dashed var(--primary-blue); padding: 20px; border-radius: 8px; text-align: center; margin-top: 15px; }
+        .flashcard-resposta { display: none; margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--gray-border); color: #0056b3; font-weight: bold; }
+
+        .contatos { background-color: var(--white); padding: 2rem; text-align: center; margin-top: auto; border-top: 4px solid var(--primary-blue); }
     </style>
 </head>
 <body>
@@ -40,62 +57,166 @@
         <nav>
             <a href="#acervo">Acervo</a>
             <a href="#contatos">Contatos</a>
-            <a href="login.php">Login Curador</a>
+            <a href="login.php">Área do Curador</a>
         </nav>
     </header>
 
     <div class="search-container">
-        <!-- Requisito Funcional: Filtrar acervo por nichos ou temas usando barra de pesquisa -->
-        <input type="text" id="searchInput" placeholder="Pesquise por nicho, tema ou título...">
-        <button onclick="buscarAcervo()">Buscar</button>
+        <input type="text" id="searchInput" placeholder="Pesquise por nicho, tema ou palavra-chave...">
+        <!-- Adicionado type="button" para evitar recarregamento da página -->
+        <button type="button" onclick="buscarAcervo()">Buscar</button>
     </div>
 
     <main>
         <div id="acervo" class="content-grid">
-            <!-- Os cards de conteúdo (Vídeo, Artigo, Podcast, Flashcard) serão carregados aqui via JS/PHP -->
+            <!-- Cards carregados dinamicamente -->
         </div>
     </main>
 
+    <!-- Modal (A Janela Pop-up) -->
+    <div id="mediaModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="fecharModal()">&times;</span>
+            <div id="modalHeader"></div>
+            <div id="modalBody" class="modal-body"></div>
+        </div>
+    </div>
+
     <section id="contatos" class="contatos">
         <h2>Contatos dos Curadores</h2>
-        <p>Envie dúvidas ou sugestões de novos conteúdos:</p>
+        <p>Dúvidas ou sugestões de novos conteúdos?</p>
         <p>Email: <strong>suporte@modoadulto.com.br</strong></p>
     </section>
 
     <script>
-        // JS para consumir a API do PHP e renderizar o acervo (UC07 - Consultar Acervo)
+        let acervoDados = [];
+
         async function buscarAcervo() {
             const query = document.getElementById('searchInput').value;
             const container = document.getElementById('acervo');
             
             try {
-                // Rota fictícia para o backend PHP
                 const response = await fetch(`buscar_acervo.php?q=${encodeURIComponent(query)}`);
-                const dados = await response.json();
+                acervoDados = await response.json();
                 
                 container.innerHTML = '';
-                if(dados.length === 0) {
-                    container.innerHTML = '<p>Nenhum conteúdo disponível para este critério.</p>';
+                if(acervoDados.length === 0) {
+                    container.innerHTML = '<p style="grid-column: 1/-1; text-align:center;">Nenhum conteúdo disponível para este critério.</p>';
                     return;
                 }
 
-                dados.forEach(item => {
+                acervoDados.forEach((item, index) => {
                     const card = document.createElement('div');
                     card.className = 'card';
                     card.innerHTML = `
-                        <span class="badge">${item.tipo_midia.toUpperCase()}</span>
-                        <span class="badge">${item.nicho_nome}</span>
-                        <h3>${item.titulo}</h3>
-                        <p>${item.descricao}</p>
+                        <div>
+                            <div class="card-header">
+                                <span class="badge">${item.tipo_midia}</span>
+                                <span class="badge">${item.nicho_nome}</span>
+                            </div>
+                            <h3>${htmlspecialchars(item.titulo)}</h3>
+                            <p>${htmlspecialchars(item.descricao)}</p>
+                        </div>
+                        <!-- Adicionado type="button" aqui -->
+                        <button type="button" class="btn-acessar" onclick="abrirConteudo(${index})">Acessar Conteúdo</button>
                     `;
                     container.appendChild(card);
                 });
             } catch (error) {
-                container.innerHTML = '<p>Erro ao carregar o acervo. Tente novamente.</p>';
+                container.innerHTML = '<p style="grid-column: 1/-1; text-align:center; color:red;">Erro ao carregar o acervo. Tente novamente.</p>';
             }
         }
 
-        // Carrega tudo ao iniciar
+        // Função auxiliar para corrigir links que não tenham http:// ou https://
+        function corrigirLink(link) {
+            if (!link) return '#';
+            if (!link.startsWith('http://') && !link.startsWith('https://')) {
+                return 'https://' + link;
+            }
+            return link;
+        }
+
+        function abrirConteudo(index) {
+            const item = acervoDados[index];
+            const modalHeader = document.getElementById('modalHeader');
+            const modalBody = document.getElementById('modalBody');
+
+            modalHeader.innerHTML = `
+                <span class="badge">${item.tipo_midia}</span>
+                <span class="badge">${item.nicho_nome}</span>
+                <h2 style="color: #0056b3; margin-top: 10px;">${htmlspecialchars(item.titulo)}</h2>
+                <p style="color: #666; font-size: 0.9rem; margin-bottom: 15px;">Publicado em: ${item.data_publicacao}</p>
+            `;
+
+            let conteudoHTML = `<p><strong>Síntese:</strong> ${htmlspecialchars(item.descricao)}</p><hr style="margin: 15px 0; border: 0; border-top: 1px solid #cce0ff;">`;
+
+            // Tratamento corrigido para VÍDEO
+            if (item.tipo_midia === 'video') {
+                const linkCorrigido = corrigirLink(item.link_ou_arquivo_do_video);
+                conteudoHTML += `
+                    <p><strong>Vídeo Recomendado:</strong></p>
+                    <p style="margin-top: 10px;">
+                        <a href="${htmlspecialchars(linkCorrigido)}" target="_blank" class="btn-acessar" style="display:inline-block; text-decoration:none; width:auto; padding: 10px 20px;">
+                            Assistir Vídeo Externo 🔗
+                        </a>
+                    </p>
+                `;
+            // Tratamento corrigido para ARTIGO
+            } else if (item.tipo_midia === 'artigo') {
+                conteudoHTML += `
+                    <h3>${htmlspecialchars(item.subtitulo || '')}</h3>
+                    <div style="margin-top: 15px; white-space: pre-line;">${htmlspecialchars(item.corpo_do_texto || '')}</div>
+                `;
+            // Tratamento corrigido para PODCAST
+            } else if (item.tipo_midia === 'podcast') {
+                const linkCorrigidoAudio = corrigirLink(item.link_ou_arquivo_de_audio);
+                conteudoHTML += `
+                    <p><strong>Ouvir Podcast:</strong></p>
+                    <p style="margin-top: 10px;">
+                        <a href="${htmlspecialchars(linkCorrigidoAudio)}" target="_blank" class="btn-acessar" style="display:inline-block; text-decoration:none; width:auto; padding: 10px 20px;">
+                            Acessar Áudio do Podcast 🔗
+                        </a>
+                    </p>
+                `;
+            // Tratamento corrigido para FLASHCARD
+            } else if (item.tipo_midia === 'flashcard') {
+                conteudoHTML += `
+                    <div class="flashcard-box">
+                        <h3>Pergunta (Frente):</h3>
+                        <p style="font-size: 1.1rem; margin-top: 10px;">${htmlspecialchars(item.pergunta_frente || '')}</p>
+                        
+                        <button type="button" class="btn-acessar" style="margin-top: 15px; width: auto; padding: 8px 15px;" onclick="toggleRespostaFlashcard()">Mostrar Resposta</button>
+                        
+                        <div id="respostaFlashcard" class="flashcard-resposta">
+                            <h4>Resposta (Verso):</h4>
+                            <p style="margin-top: 5px;">${htmlspecialchars(item.resposta_verso || '')}</p>
+                        </div>
+                    </div>
+                `;
+            }
+
+            modalBody.innerHTML = conteudoHTML;
+            document.getElementById('mediaModal').style.display = 'flex';
+        }
+
+        function toggleRespostaFlashcard() {
+            const resp = document.getElementById('respostaFlashcard');
+            if (resp.style.display === 'block') {
+                resp.style.display = 'none';
+            } else {
+                resp.style.display = 'block';
+            }
+        }
+
+        function fecharModal() {
+            document.getElementById('mediaModal').style.display = 'none';
+        }
+
+        function htmlspecialchars(str) {
+            if (!str) return '';
+            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+        }
+
         window.onload = buscarAcervo;
     </script>
 </body>
